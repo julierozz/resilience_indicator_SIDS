@@ -1,0 +1,17 @@
+                      OLS Regression Results                     
+Dep. Variable:   ,resilience      ,  R-squared:         ,   0.230
+Model:           ,OLS             ,  Adj. R-squared:    ,   0.223
+Method:          ,Least Squares   ,  F-statistic:       ,   34.30
+Date:            ,Sat, 17 Sep 2016,  Prob (F-statistic):,4.58e-08
+Time:            ,10:49:10        ,  Log-Likelihood:    ,  106.57
+No. Observations:,   117          ,  AIC:               ,  -209.1
+Df Residuals:    ,   115          ,  BIC:               ,  -203.6
+Df Model:        ,     1          ,                     ,        
+Covariance Type: ,nonrobust       ,                     ,        
+         ,   coef   , std err ,    t    ,P>|t| , [95.0% Conf. Int.]
+Intercept,    0.5525,    0.013,   41.089, 0.000,    0.526     0.579
+gdp_pc_pp, 4.144e-06, 7.08e-07,    5.856, 0.000, 2.74e-06  5.55e-06
+Omnibus:      , 7.288,  Durbin-Watson:     ,   1.905
+Prob(Omnibus):, 0.026,  Jarque-Bera (JB):  ,   6.858
+Skew:         ,-0.531,  Prob(JB):          ,  0.0324
+Kurtosis:     , 3.530,  Cond. No.          ,2.82e+04
