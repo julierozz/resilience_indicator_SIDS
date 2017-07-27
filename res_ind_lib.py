@@ -11,7 +11,7 @@ from scipy.interpolate import interp1d
 #name of admin division 
 economy = "country"
 #levels of index at which one event happens
-event_level = [economy, "hazard", "rp"]
+event_level = [economy, "sector", "hazard", "rp"]
 
 #return period to use when no rp is provided (mind that this works with protection)
 default_rp = "default_rp" 
@@ -21,9 +21,12 @@ income_cats   = pd.Index(["poor","nonpoor"],name="income_cat")
 #categories for social protection
 affected_cats = pd.Index(["a", "na"]            ,name="affected_cat")
 helped_cats   = pd.Index(["helped","not_helped"],name="helped_cat")
+#infrastructure stocks categories
+infra_cats = ['transport','all_infra_but_transport']
+sector_cats = ['transport','all_infra_but_transport','other_k']
 
 
-def compute_resilience(df_in,cat_info, hazard_ratios=None, is_local_welfare=True, return_iah=False, return_stats=False,optionT="data", optionPDS="unif_poor", optionB = "data", loss_measure = "dk",fraction_inside=1, verbose_replace=False, optionFee="tax",  share_insured=.25):
+def compute_resilience(df_in,cat_info, infra_stocks, hazard_ratios=None, is_local_welfare=True, return_iah=False, return_stats=False,optionT="data", optionPDS="unif_poor", optionB = "data", loss_measure = "dk",fraction_inside=1, verbose_replace=False, optionFee="tax",  share_insured=.25):
     """Main function. Computes all outputs (dK, resilience, dC, etc,.) from inputs
     optionT=="perfect","data","x33","incl" or "excl"
     optionPDS=="no","unif_all","unif_poor","prop"
@@ -33,8 +36,9 @@ def compute_resilience(df_in,cat_info, hazard_ratios=None, is_local_welfare=True
     """
     
     #make sure to copy inputs
-    macro    =    df_in.dropna().copy(deep=True)
-    cat_info = cat_info.dropna().copy(deep=True)
+    macro        =    df_in.dropna().copy(deep=True)
+    cat_info     = cat_info.dropna().copy(deep=True)
+    infra_stocks = infra_stocks.dropna().copy(deep=True)
     
     
     ####DEFAULT VALUES
@@ -66,10 +70,11 @@ def compute_resilience(df_in,cat_info, hazard_ratios=None, is_local_welfare=True
     #########
     ## PRE PROCESS and harmonize input values
     #removes countries in macro not in cat_info, otherwise it crashes
-    common_places = [c for c in macro.index if c in cat_info.index and c in hazard_ratios.index]
+    common_places = [c for c in macro.index if c in cat_info.index and c in hazard_ratios.index and c in infra_stocks.index]
     macro = macro.ix[common_places]        
     cat_info = cat_info.ix[common_places]        
     hazard_ratios = hazard_ratios.ix[common_places]        
+    infra_stocks = infra_stocks.ix[common_places]        
     
     
     ##consistency of income, gdp, etc.
@@ -97,7 +102,11 @@ def compute_resilience(df_in,cat_info, hazard_ratios=None, is_local_welfare=True
     recons_rate = three/ macro["T_rebuild_K"]  
     
     # Calculation of macroeconomic resilience
-    macro["macro_multiplier"] =(macro["avg_prod_k"] +recons_rate)/(macro["rho"]+recons_rate)  
+    macro["v_product"]        = v_product(infra_stocks, infra_cats)
+    macro["alpha_v_sum"]      = alpha_v_sum(infra_stocks)
+    macro["dy_over_dk"]       = (1-macro["v_product"])/macro["alpha_v_sum"]*macro["avg_prod_k"]+macro["v_product"]*macro["avg_prod_k"]/3
+    # macro["dy_over_dk"]       = macro["avg_prod_k"]
+    macro["macro_multiplier"] = (macro["dy_over_dk"] +recons_rate)/(macro["rho"]+recons_rate)  
     
     ####FORMATING
     #gets the event level index
@@ -248,7 +257,7 @@ def compute_dK_dW(macro_event, cats_event, optionT="data", optionPDS="unif_poor"
     #OUTPUT
     df_out = pd.DataFrame(index=macro_event.index)
     
-    # df_out["macro_multiplier"] = macro_event["macro_multiplier"]
+    df_out["macro_multiplier"] = macro_event["macro_multiplier"]
     
     df_out["dK"] = dK
     df_out["dKtot"]=dK*macro_event["pop"] #/macro_event["protection"]
@@ -532,7 +541,21 @@ def welf(c,elast):
     # y[cond] = np.log(c[cond]) 
     
     return y
-        
+    
+def v_product(infra_stocks, infra_cats):
+    """multiplier of the production function, using the vulnerabilities and exposure of infrastructure stocks."""
+    p = (infra_stocks.v*infra_stocks.fa).unstack("sector")
+    q = 1
+    for i in infra_cats:
+        q = q*(1-p[i])**(1/len(infra_cats))
+    return q
+    
+def alpha_v_sum(infra_stocks):
+    """sum of the shares times vulnerabilities times exposure. enters the deltaY over delta K function"""
+    a = infra_stocks.prod(axis=1).sum(level="country")
+    return a
+
+    
 def agg_to_event_level (df, seriesname):
     """ aggregates seriesname in df (string of list of string) to event level (country, hazard, rp) using n in df as weight
     does NOT normalize weights to 1."""
