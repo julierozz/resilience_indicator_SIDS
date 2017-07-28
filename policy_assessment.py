@@ -144,7 +144,7 @@ outfolder="cards/", name_suffix="", max_lines = None, do_by_policy = False ,offs
     
 def file_name_formater(string):
     """Ensures string does not contain special characters so it can be used as a file name"""    
-    return string.lower().replace(" ","_").replace("\\","")
+    return string.lower().replace(" ","_").replace("\\","").replace("\n","_").replace("%","pc")
        
 
 def merge_cardfiles(list,outputname):

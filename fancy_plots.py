@@ -212,7 +212,7 @@ def savefig(path, **kwargs):
 
     #saves
     plt.savefig(path+".png", **kwargs)
-    plt.savefig(path+".pdf", **kwargs)
+    # plt.savefig(path+".pdf", **kwargs)
     
     folder = os.path.dirname(path)
     filename  = os.path.basename(path)
@@ -220,7 +220,7 @@ def savefig(path, **kwargs):
     # print("path", path, "folder",folder,"filename", filename)
     # aaaaa
     Popen(["convert", filename+".png", "-trim", filename+".png" ], cwd=folder, shell=True )
-    Popen("pdfcrop {fn}.pdf {fn}.pdf".format(fn=filename), cwd=folder )
+    # Popen("pdfcrop {fn}.pdf {fn}.pdf".format(fn=filename), cwd=folder )
     
     
     

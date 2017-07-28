@@ -58,8 +58,8 @@ def apply_policy(m_,c_,h_, a_ , policy_name=None, verbose=True):
     #vpoor = vnonpoor
     elif policy_name=="vpvr":
         c.v = c.v.unstack().assign(poor=lambda x:x.nonpoor).stack()
-        desc = "Make poor people's assets as resistant as nonpoor people's assets"
-
+        desc = "Make poor people's assets as resistant as nonpoor people's assets"    
+        
     #30% or poor people see their v reduced 30% (not 10pts!!)   
     elif policy_name=="vp":
         n = c.n.unstack().poor

@@ -11,7 +11,7 @@ from scipy.interpolate import interp1d
 #name of admin division 
 economy = "country"
 #levels of index at which one event happens
-event_level = [economy, "sector", "hazard", "rp"]
+event_level = [economy, "hazard", "rp"]
 
 #return period to use when no rp is provided (mind that this works with protection)
 default_rp = "default_rp" 
@@ -151,6 +151,8 @@ def compute_resilience(df_in,cat_info, infra_stocks, hazard_ratios=None, is_loca
     dkdw_h = average_over_rp(dkdw_event,macro_event["protection"])
     
     #Sums over hazard dk, dW (gets one line per economy)
+    #remove inputs from this variable to avoid summing inputs over economy
+    #to do it by sector, add an agregation function that multiplies by shares and then sums over sectors
     dkdw = dkdw_h.sum(level=economy)
 
     #adds dk and dw-like columns to macro
