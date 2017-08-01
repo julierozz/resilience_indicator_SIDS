@@ -1,18 +1,29 @@
 from pandas_helper import *
 from res_ind_lib import *
 
-def apply_policy(m_,c_,h_, a_ , policy_name=None, verbose=True):
+def apply_policy(m_,c_,i_, h_, a_ , policy_name=None, verbose=True):
     """Choses a policy by name, appliesit to m,c,and/or h, and returns new values as well as a policy description"""    
     
     #duplicate inputes
     m=m_.copy(deep=True)
     c=c_.copy(deep=True)
-    h=h_.copy(deep=True)
+    c=c_.copy(deep=True)
+    i=i_.copy(deep=True)
     a=a_.copy() #dictionary, do not attempt to deep copy
     
     
     if policy_name is None:
         desc = "Baseline"
+        
+    # Transport
+    elif policy_name=="vtransp":
+        i.v = i.v.unstack('sector').assign(transport=lambda df:df.transport*0.5).stack()
+        desc = "Decrease vulnerability\nof transport by 50%"
+        
+    elif policy_name=="etransp":
+        i.e = i.e.unstack('sector').assign(transport=lambda df:df.transport*0.5).stack()
+        desc = "Increase economy resilience to transport disruptions by 50%"
+
         
     # Pov reduction
     elif policy_name=="kp":

@@ -53,7 +53,7 @@ def compute_resilience(df_in,cat_info, infra_stocks, hazard_ratios=None, is_loca
     
     #default hazard
     if hazard_ratios is None:
-        hazard_ratios = pd.Series(1,index=pd.MultiIndex.from_product([macro.index,"default_hazard"],names=[economy, "hazard"]))
+        hazard_ratios = pd.Series(1,index=pd.MultiIndex.from_product([macro.index,["default_hazard"]],names=[economy, "hazard"]))
                    
     #if fa ratios were provided with no hazard data, they are broadcasted to default hazard
     if "hazard" not in get_list_of_index_names(hazard_ratios):
@@ -134,6 +134,7 @@ def compute_resilience(df_in,cat_info, infra_stocks, hazard_ratios=None, is_loca
             print("Replaced in cats: "+", ".join(cols_c))
     if verbose_replace:
         print("Replaced in both: "+", ".join(np.intersect1d(cols,cols_c)))
+           
   
     ####COMPUTING LOSSES
     #computes dk and dW per event
@@ -159,13 +160,13 @@ def compute_resilience(df_in,cat_info, infra_stocks, hazard_ratios=None, is_loca
     macro[dkdw.columns]=dkdw
     
     #computes socio economic capacity and risk at economy level
-    macro = calc_risk_and_resilience_from_k_w(macro, is_local_welfare)
+    results = calc_risk_and_resilience_from_k_w(macro, is_local_welfare)
     
     ###OUTPUTS
     if return_iah:
-        return macro, cats_event_iah
+        return results, cats_event_iah
     else:
-        return macro
+        return results
 
     
 def compute_dK_dW(macro_event, cats_event, optionT="data", optionPDS="unif_poor", optionB="data", optionFee="tax", return_iah=False, return_stats=False, is_local_welfare=True,loss_measure="dk",fraction_inside=1, share_insured=.25):  
@@ -259,8 +260,6 @@ def compute_dK_dW(macro_event, cats_event, optionT="data", optionPDS="unif_poor"
     #OUTPUT
     df_out = pd.DataFrame(index=macro_event.index)
     
-    df_out["macro_multiplier"] = macro_event["macro_multiplier"]
-    
     df_out["dK"] = dK
     df_out["dKtot"]=dK*macro_event["pop"] #/macro_event["protection"]
 
@@ -273,7 +272,7 @@ def compute_dK_dW(macro_event, cats_event, optionT="data", optionPDS="unif_poor"
         stats = np.setdiff1d(cats_event_iah.columns,event_level+['helped_cat',  'affected_cat',     'income_cat'])
         df_stats = agg_to_event_level(cats_event_iah, stats)
         # if verbose_replace:
-        print("stats are "+",".join(stats))
+        print("!! (maybe broken) stats are "+",".join(stats))
         df_out[df_stats.columns]=(df_stats.T*macro_event.protection).T #corrects stats from protecgion because they get averaged over rp with the rest of df_out later
     
     if return_iah:
@@ -547,14 +546,15 @@ def welf(c,elast):
 def v_product(infra_stocks, infra_cats):
     """multiplier of the production function, using the vulnerabilities and exposure of infrastructure stocks."""
     p = (infra_stocks.v*infra_stocks.fa).unstack("sector")
+    e = infra_stocks.e.unstack("sector")
     q = 1
     for i in infra_cats:
-        q = q*(1-p[i])**(1/len(infra_cats))
+        q = q*(1-p[i])**(e[i])
     return q
     
 def alpha_v_sum(infra_stocks):
     """sum of the shares times vulnerabilities times exposure. enters the deltaY over delta K function"""
-    a = infra_stocks.prod(axis=1).sum(level="country")
+    a = infra_stocks.drop('e',axis=1).prod(axis=1).sum(level="country")
     return a
 
     
